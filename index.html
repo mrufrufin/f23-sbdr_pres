@@ -8,22 +8,49 @@
 
 		<link rel="stylesheet" href="dist/reset.css">
 		<link rel="stylesheet" href="dist/reveal.css">
-		<link rel="stylesheet" href="dist/theme/black.css">
+		<link rel="stylesheet" href="dist/theme/white.css">
 
 		<!-- Theme used for syntax highlighted code -->
 		<link rel="stylesheet" href="plugin/highlight/monokai.css">
+<style>
+img[alt=archpic]{width:50%;}
+</style>
 	</head>
 	<body>
 		<div class="reveal">
 			<div class="slides">
-				<section>Slide 1</section>
-				<section>Slide 2</section>
+				<section data-markdown data-background-image="res/bg/soundbendor-logo.png" data-background-position="100% 92.5%" data-background-size="200px">
+                    <textarea data-template>
+                        ## Music Source Separation in the Waveform Domain (2021)
+                        Alexandre Défossez (FAIR), Nicolas Usunier (FAIR), Léon Bottou (FAIR), Francis Bach (INRIA)
+
+
+
+                        Presentation by Derek Kwan - November 6, 2023
+                        
+                        ---
+                        ## Hi2
+                        this is a test2
+                        ---
+                        ## Formula
+                        `$$ \sum_{t=1}^{T} \frac{\partial}{\partial x_i} \gamma x_i^2 $$`
+                        ---
+                        ## Architecture (Overall)
+                        ![archpic](res/demucs-whole.png)
+                        ---
+                        ## References
+                        Défossez, A., Usunier, N., Bottou, L., and Bach., F. (2021). Music Source Separation in the Waveform Domain. https://arxiv.org/abs/1911.13254
+
+                    </textarea>
+
+                </section>
 			</div>
 		</div>
 
 		<script src="dist/reveal.js"></script>
 		<script src="plugin/notes/notes.js"></script>
 		<script src="plugin/markdown/markdown.js"></script>
+		<script src="plugin/math/math.js"></script>
 		<script src="plugin/highlight/highlight.js"></script>
 		<script>
 			// More info about initialization & config:
@@ -33,7 +60,7 @@
 				hash: true,
 
 				// Learn about plugins: https://revealjs.com/plugins/
-				plugins: [ RevealMarkdown, RevealHighlight, RevealNotes ]
+				plugins: [ RevealMath.KaTeX, RevealMarkdown, RevealHighlight, RevealNotes ]
 			});
 		</script>
 	</body>
