@@ -14,6 +14,14 @@
 		<link rel="stylesheet" href="plugin/highlight/monokai.css">
 <style>
 img[alt=archpic]{width:50%;}
+
+.reveal section p {
+    font-size: 0.75em !important;
+}
+
+li {
+    font-size: 0.8em;
+}
 </style>
 	</head>
 	<body>
@@ -29,17 +37,48 @@ img[alt=archpic]{width:50%;}
                         Presentation by Derek Kwan - November 6, 2023
                         
                         ---
-                        ## Hi2
-                        this is a test2
+                        ## Terms
+                        - Masks (S = Signal, N = Noise, Y = Mix)
+                            - calculated using speech and noise, reconstruction using noisy phase
+                            - Ideal Binary Mask (IBM)
+                                - based on "masking phenomenon of human auditory system" (Wang et al., 2016)
+                                - 1 if SNR > LC, else 0
+                            - Ideal Ratio Mask (IRM)
+                                - `$$ (\frac{|S|^2}{|S|^2 + |N|^2})^\beta $$`
                         ---
-                        ## Formula
-                        `$$ \sum_{t=1}^{T} \frac{\partial}{\partial x_i} \gamma x_i^2 $$`
+                        ## Terms Cont.
+                        - SDR (signal to distortion ratio, interf = interference, artif = artifacts) (Vincent et al, 2006)
+                            - `$$ 10 \log_{10}{\frac{\lVert s_{target} \rVert ^2}{\lVert e_{interf} + e_{artif} \rVert ^2}} $$`
+                            
                         ---
                         ## Architecture (Overall)
                         ![archpic](res/demucs-whole.png)
+
+                        ---
+                        ## Demucs Family
+                        - Hybrid Demucs (2021)
+                            - adds parallel branch with spectrogram
+                        - Hybrid Transformer Demucs (2022)
+                            - replaces LSTM with Transformer
+
+                        ---
+                        ## Architecture (Hybrid Demucs)
+                        ![archpic](res/demucs-hybrid.png)
+
+                        ---
+                        ## Architecture (HT Demucs)
+                        ![archpic](res/demucs-tx.png)
+
                         ---
                         ## References
-                        Défossez, A., Usunier, N., Bottou, L., and Bach., F. (2021). Music Source Separation in the Waveform Domain. https://arxiv.org/abs/1911.13254
+                        - Défossez, A., Usunier, N., Bottou, L., and Bach., F. (2021). Music Source Separation in the Waveform Domain. https://arxiv.org/abs/1911.13254
+                        - Défossez, A. (2021). Hybrid Spectrogram and Waveform Source Separation. https://arxiv.org/abs/2111.03600
+                        - Luo, Y. and Mesgarani, N. (2019). Conv-TasNet: Surpassing Ideal Time-Frequency Magnitude Masking for Speech Separation. *IEEE/ACM Transactions on Audio, Speech, and Language Processing 27(8)*, 1256-1266. https://doi.org/10.1109/TASLP.2019.2915167
+                        - Rouard, S., Massa, F., and Défossez, A. (2023). Hybrid Transformers for Music Source Separation. *ICASSP 2023-2023 IEEE International Conference on Acoustics, Speech, and Signal Processing*. https://doi.org/10.1109/ICASSP49357.2023.10096956
+                        ---
+                        ## References cont.
+                        - Vincent, E., Gribonval, R., and Févotte, C. (2006). Performance measurement in blind audio source separation. *IEEE Transactions on Audio, Speech, and Language Processing 14(4)*, 1462-1469. https://doi.org/10.1109/TSA.2005.858005
+                        - Wang, Z., Wang. X., Li., X., Fu., Q., and Yan., Y. (2016). Oracle Performance Investigation of the Ideal Masks. *2016 IEEE International Workshop on Acoustic Signal Enhancement*. https://doi.org/10.1109/IWAENC.2016.7602888
 
                     </textarea>
 
