@@ -13,7 +13,8 @@
 		<!-- Theme used for syntax highlighted code -->
 		<link rel="stylesheet" href="plugin/highlight/monokai.css">
 <style>
-img[alt=archpic]{width:50%;}
+img[alt=archpic]{height:50%;width:85%;}
+img[alt=archpic2]{height:50%;width:50%;}
 
 .reveal section p {
     font-size: 0.75em !important;
@@ -35,10 +36,24 @@ li {
 
 
                         Presentation by Derek Kwan - November 6, 2023
-                        
+                        ---
+                        ## Problem Statement
+                        - want to "demix"/"demux" a music recording into its constituent instrumental parts
+                            - DAW: instrumental tracks/"stems" (for remixing)
+                        - "cocktail party"
+                        - uses rock band instrumentation (vocal, drums, bass, guitar)
+                            - understandable since standardized, number of instruments small, and relatively distinguishable
+                                - compare with orchestra or string quartet (2 violins, viola, cello)
+                        - SiSec Mus (Inria), Sound DemiXing Challenge (Sony/Mitsubishi)
+                        ---
+                        ## Problem Setup
+                        - Approach: Supervised
+                        - Dataset: MusDB
+                            - mixed-down music tracks
+                            - separate instrument tracks
                         ---
                         ## Terms
-                        - Masks (S = Signal, N = Noise, Y = Mix)
+                        - Mask (S = Signal, N = Noise, Y = Mix) Baselines
                             - calculated using speech and noise, reconstruction using noisy phase
                             - Ideal Binary Mask (IBM)
                                 - based on "masking phenomenon of human auditory system" (Wang et al., 2016)
@@ -49,10 +64,66 @@ li {
                         ## Terms Cont.
                         - SDR (signal to distortion ratio, interf = interference, artif = artifacts) (Vincent et al, 2006)
                             - `$$ 10 \log_{10}{\frac{\lVert s_{target} \rVert ^2}{\lVert e_{interf} + e_{artif} \rVert ^2}} $$`
-                            
+                        - PReLu
+                            - `$$ max(0,x) + a * min(0,x) $$`
+                        - STFT - Short-Time Fourier Transform
+                            - FT on successive windows (to get spectrograms)
+                        ---
+                        ## Related Work (non-DL)
+                        - non-negative matrix facotirzation
+                        - independent component analysis (ICA)
+                        - Hidden Markov Models
+                        - segmentation
+                        ---
+                        ## Related Work (DL)
+                        - typically spectrogram (STFT) based
+                            - has used fully-connected networks
+                            - convolutional
+                                - Conv-Tasnet - monophonic speech: 8 kHz SR
+                                    - outperforms IBM, IRM
+                                - D3Net
+                                    - dilated convolutions
+                        - Raw Waveform
+                            - Wave U-Net
+                                - originally spectrogram, converted for raw waveforms
+                                - raw waveform performance not as good as spectrogram methods
+                        
+                        ---
+                        ## Conv-Tasnet
+                        - minimize `$$ \min_{\theta} \sum_{x \in \mathcal{D}} \sum_{s=1}^{S} L(g_s(x;\theta), x_s) $$`
+                        - C = channels, T = length of waveform in samples, D = dataset, L = reconstruction error
+                        - source signal index s `$$ x_s \in \mathbb{R}^{C,T} $$` 
+                        - g<sub>s</sub> model outputting s with parameters x (input) and theta (parameters)
+                        ---
+                        ## Conv-Tasnet
+                        - monophonic 8 kHZ to 128 channels at 1 kHz
+                        - convolutional encoder (H - nonlinearity, x<sub>k</sub> - 1 x L real input (k = 1..T segments of input), U - N (vectors) x L basis functions, w - 1 X N real output )
+                            - `$$ \bm{w} = \mathcal{H}(\bm{x} \bm{U}) $$`
+                            - kernel size/stride = 16/8
+                            - blocks uses depth-wise separable convolutions (3/1), dilated convolutions (2<sup>n mod N</sup> , n 0-index of block, N = 8) for temporal connections (opposed to RNN)
+                        - transposed convolutional decoder (V - N x L decoder basis rows)
+                            - `$$ \bm{\hat{x}} = \bm{w} \bm{V} $$`
+                            - kernel size/stride = 16/8
+                        - overlap reconstructions and add
+                        ---
+                        ## Architecture (Conv-Tasnet)
+                        ![archpic](res/convtasnet.png)
+                        ---
+                        ## Conv-Tasnet Adaptation
+                        - originally
+                            - 3 X N=8 dilated conv blocks
+                            - 8 kHZ mono to 1 kHz and 128 channels encoded (receptive field: 1.5 sec)
+                            - 16/8 ks/str
+                            - seconds long snippets of speech
+                        - adapted
+                            - 4 x N=10 dilated conv blocks (same receptive field at 44.1 kHz)
+                            - 256 channels
+                            - 20/10 ks/str
+                            - 8 seconds of music (not too long because of normalization concerns)
+
                         ---
                         ## Architecture (Overall)
-                        ![archpic](res/demucs-whole.png)
+                        ![archpic2](res/demucs-whole.png)
 
                         ---
                         ## Demucs Family
@@ -63,7 +134,7 @@ li {
 
                         ---
                         ## Architecture (Hybrid Demucs)
-                        ![archpic](res/demucs-hybrid.png)
+                        ![archpic2](res/demucs-hybrid.png)
 
                         ---
                         ## Architecture (HT Demucs)
@@ -73,10 +144,12 @@ li {
                         ## References
                         - Défossez, A., Usunier, N., Bottou, L., and Bach., F. (2021). Music Source Separation in the Waveform Domain. https://arxiv.org/abs/1911.13254
                         - Défossez, A. (2021). Hybrid Spectrogram and Waveform Source Separation. https://arxiv.org/abs/2111.03600
+                        - PyTorch Contributors (2023). PReLu. PyTorch. https://pytorch.org/docs/stable/generated/torch.nn.PReLU.html
+                        - Wang, C.F. (2018). A Basic Introduction to Separable Convolutions. Towards Data Sceience. https://towardsdatascience.com/a-basic-introduction-to-separable-convolutions-b99ec3102728
                         - Luo, Y. and Mesgarani, N. (2019). Conv-TasNet: Surpassing Ideal Time-Frequency Magnitude Masking for Speech Separation. *IEEE/ACM Transactions on Audio, Speech, and Language Processing 27(8)*, 1256-1266. https://doi.org/10.1109/TASLP.2019.2915167
-                        - Rouard, S., Massa, F., and Défossez, A. (2023). Hybrid Transformers for Music Source Separation. *ICASSP 2023-2023 IEEE International Conference on Acoustics, Speech, and Signal Processing*. https://doi.org/10.1109/ICASSP49357.2023.10096956
                         ---
                         ## References cont.
+                        - Rouard, S., Massa, F., and Défossez, A. (2023). Hybrid Transformers for Music Source Separation. *ICASSP 2023-2023 IEEE International Conference on Acoustics, Speech, and Signal Processing*. https://doi.org/10.1109/ICASSP49357.2023.10096956
                         - Vincent, E., Gribonval, R., and Févotte, C. (2006). Performance measurement in blind audio source separation. *IEEE Transactions on Audio, Speech, and Language Processing 14(4)*, 1462-1469. https://doi.org/10.1109/TSA.2005.858005
                         - Wang, Z., Wang. X., Li., X., Fu., Q., and Yan., Y. (2016). Oracle Performance Investigation of the Ideal Masks. *2016 IEEE International Workshop on Acoustic Signal Enhancement*. https://doi.org/10.1109/IWAENC.2016.7602888
 
