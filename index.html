@@ -41,7 +41,8 @@ li {
                         - want to "demix"/"demux" a music recording into its constituent instrumental parts
                             - DAW: instrumental tracks/"stems" (for remixing)
                         - "cocktail party"
-                        - uses rock band instrumentation (vocal, drums, bass, guitar)
+                        - difficult because of overtones (among other things)
+                        - uses rock band-ish instrumentation (vocal, drums, bass, other)
                             - understandable since standardized, number of instruments small, and relatively distinguishable
                                 - compare with orchestra or string quartet (2 violins, viola, cello)
                         - SiSec Mus (Inria), Sound DemiXing Challenge (Sony/Mitsubishi)
@@ -51,6 +52,7 @@ li {
                         - Dataset: MusDB
                             - mixed-down music tracks
                             - separate instrument tracks
+                            - https://sigsep.github.io/datasets/musdb.html (requestable, manual approval)
                         ---
                         ## Terms
                         - Mask (S = Signal, N = Noise, Y = Mix) Baselines
@@ -72,7 +74,7 @@ li {
                             - FT on successive windows (to get spectrograms)
                         ---
                         ## Related Work (non-DL)
-                        - non-negative matrix facotirzation
+                        - non-negative matrix factorization
                         - independent component analysis (ICA)
                         - Hidden Markov Models
                         - segmentation
@@ -105,6 +107,8 @@ li {
                             - kernel size/stride = 16/8
                             - blocks uses depth-wise separable convolutions (3/1), dilated convolutions (2<sup>n mod N</sup> , n 0-index of block, N = 8) for temporal connections (opposed to RNN)
                             - outputs mask (sum + ReLU)
+                        ---
+                        ## Conv-Tasnet
                         - transposed convolutional decoder (V - N x L decoder basis rows)
                             - `$$ \bm{\hat{x}} = \bm{w} \bm{V} $$`
                             - input = mask * signal
@@ -140,6 +144,10 @@ li {
                                     - share phase information
                         - upsamples input 2x using sinc, downsamples 2x,
                         ---
+                        ## Architecture (Demucs)
+                        ![archpic2](res/demucs-whole.png)
+                        ---
+
                         ## Demucs Overview
                         - loss functions (T = samples, x<sub>s,t</sub> = input waveform s at sample t, x_hat<sub>s,t</sub> = output waveform s at sample t):
                             - `$$ L_1(\hat{x_s}, x_s) = \frac{1}{T} \sum_{t=1}^T |\hat{x_{s,t}} - x_{s,t}| $$`
@@ -148,20 +156,56 @@ li {
                             - usually a problem because of phase differences
                             - sound separation uses original phase (so fine)
                             - no difference between L1 and L2 so use L1
+                                - but later: L1 loss better than MSE?
+                                - theory: sparsity in representations? 
                         ---
                         ## Demucs (other considerations)
                         - uses a weight initialization scheme based on Fixup (for deep residual networks) to help even out weight magnitudes at deeper layers
+                        - issues with input offsets (in samples)
+                            - implies separation starts at beginning of tracks
+                            - LSTM - accumulating errors? (Luo and Mesgarani, 2019)
+                            - no issues with Conv-Tasnet
+                            - Demucs solution: shift-trick: shift s samples, average output shifted -s samples (+ 0.3 dB SDR)
                         ---
-                        ## Architecture (Demucs)
-                        ![archpic2](res/demucs-whole.png)
-
+                        ## Demucs Training
+                        - Datasets
+                            - MusDB (84/16/50 = 150)
+                            - extra "raw stems" (150/x/x/ = 150)
+                        - Metrics
+                            - SDR (median)
+                        - Training
+                            - epoch (360x): all 11-second song snippets with 1 sec stride, 0-1 sec time shift
+                                - extra (240x): 2-second snippets
+                            - augmentation: tempo/pitch shift (+ 0.5 dB SDR, not on extra), multiplication of source, making new mixes, swapping channels
+                            - Time 8 V100 GPUS, 16 GB RAM, (Conv-Tasnet 16, 32 GB ram)
+                            - batch size: 64
+                            - ADAM
+                        ---
+                        ## Demucs Results (SDR)
+                        ![archpic](res/demucs-chart1.png)
+                        ---
+                        ## Demucs Results (MOS)
+                        ![archpic](res/demucs-mos1.png)
+                        ![archpic](res/demucs-mos2.png)
+                        ---
+                        ## Some Takeaways
+                        - in general, bass/drums handled better by raw waveforms, pitchier things (other/vocals) better by spectrogram
+                            - (except by D3Net both with no extra data, but maybe less smearier, not captured by SDR)
+                            - Conv-Tasnet - drums and bass - "hollow instrument attacks", artifacts
+                            - STFT tradeoff: bigger windows, more smeary; smaller windows, not enough basis cosines;
+                            - makes sense the pitchier instruments would benefit from spectrogram method,
+                        - augmentation improved performance
+                            - diversity of training sets?
+                        - quantization (1014 MB to 120MB, no SDR loss), reduce number channels (64 to 32, -0.2 dB)
                         ---
                         ## Demucs Family
                         - Hybrid Demucs (2021)
                             - adds parallel branch with spectrogram
+                            - improvement on other/vocals, but not SOTA at the time (beat by KUIELAB-MDX-Net on other/vocals)
                         - Hybrid Transformer Demucs (2022)
                             - replaces LSTM with Transformer
-
+                            - sparse attention version has gains in 2 dB for drums/bass, 1+ dB gains for other/vocals
+                                - limiting comparison pairs leading to sparse matrices
                         ---
                         ## Architecture (Hybrid Demucs)
                         ![archpic2](res/demucs-hybrid.png)
@@ -172,14 +216,18 @@ li {
 
                         ---
                         ## References
+                        - Choromanski, K. and Colwell, L. (2020). Rethinking Attention with Performers. Google Research. https://blog.research.google/2020/10/rethinking-attention-with-performers.html
                         - Défossez, A., Usunier, N., Bottou, L., and Bach., F. (2021). Music Source Separation in the Waveform Domain. https://arxiv.org/abs/1911.13254
                         - Défossez, A. (2021). Hybrid Spectrogram and Waveform Source Separation. https://arxiv.org/abs/2111.03600
                         - PyTorch Contributors (2023). PReLu. PyTorch. https://pytorch.org/docs/stable/generated/torch.nn.PReLU.html
                         - Luo, Y. and Mesgarani, N. (2019). Conv-TasNet: Surpassing Ideal Time-Frequency Magnitude Masking for Speech Separation. *IEEE/ACM Transactions on Audio, Speech, and Language Processing 27(8)*, 1256-1266. https://doi.org/10.1109/TASLP.2019.2915167
                         ---
                         ## References cont.
+                        - Luo, Y. and Mesgarani, N. (2018). Tasnet: Time-Domain Audio Separation Network for Real-Time, Single-Channel Speech Separation. *IEEE International Conference on Acoustics, Speech, and Signal Processing*. https://doi.org/10.1109/ICASSP.2018.8462116 
                         - Rouard, S., Massa, F., and Défossez, A. (2023). Hybrid Transformers for Music Source Separation. *ICASSP 2023-2023 IEEE International Conference on Acoustics, Speech, and Signal Processing*. https://doi.org/10.1109/ICASSP49357.2023.10096956
                         - Tovar, A. D. (2020). GLU: Gated Linear Unit implementation. Deep Learning made easy. https://medium.com/deeplearningmadeeasy/glu-gated-linear-unit-21e71cd52081 
+                        ---
+                        ## References cont.
                         - Vincent, E., Gribonval, R., and Févotte, C. (2006). Performance measurement in blind audio source separation. *IEEE Transactions on Audio, Speech, and Language Processing 14(4)*, 1462-1469. https://doi.org/10.1109/TSA.2005.858005
                         - Wang, C.F. (2018). A Basic Introduction to Separable Convolutions. Towards Data Sceience. https://towardsdatascience.com/a-basic-introduction-to-separable-convolutions-b99ec3102728
                         - Wang, Z., Wang. X., Li., X., Fu., Q., and Yan., Y. (2016). Oracle Performance Investigation of the Ideal Masks. *2016 IEEE International Workshop on Acoustic Signal Enhancement*. https://doi.org/10.1109/IWAENC.2016.7602888
