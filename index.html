@@ -188,7 +188,7 @@ li {
                         ![archpic](res/demucs-mos1.png)
                         ![archpic](res/demucs-mos2.png)
                         ---
-                        ## Some Takeaways
+                        ## Results Discussion
                         - in general, bass/drums handled better by raw waveforms, pitchier things (other/vocals) better by spectrogram
                             - (except by D3Net both with no extra data, but maybe less smearier, not captured by SDR)
                             - Conv-Tasnet - drums and bass - "hollow instrument attacks", artifacts
@@ -214,6 +214,30 @@ li {
                         ## Architecture (HT Demucs)
                         ![archpic](res/demucs-tx.png)
 
+                        ---
+                        ## Hybrid Demucs Results (nSDR)
+                        ![archpic](res/hybriddemucs-res.png)
+                        ---
+                        ## nSDR
+                        - `$$ nSDR = 10 \log_{10}{\frac{\sum_n \lVert \bm{s}(n) \rVert ^2 + \epsilon}{\sum_n \lVert \bm{s}(n) - \bm{\hat{s}}(n) \rVert ^2 + \epsilon}} $$`
+                        - s - ground truth, s_hat = estimated source, n = time index
+                        ---
+                        ## HT Demucs Results (SDR)
+                        ![archpic](res/htdemucs-res.png)
+                        ---
+                        ## Some Takeaways
+                        - input representation matters
+                            - extreme example: one-hot
+                            - scopes task, results, etc.
+                            - pitch (spectrogram) vs raw waveform
+                                - bias towards different instruments
+                            - sometimes bias is good (less data)
+                                - distance to latent representations
+                                    - masking doesn't really work in time domain
+                                - but again, limits scope
+                        - architecture choices introduce bias
+                            - LSTM vs dilated convolution - time equivariance
+                            - let domain knowledge guide choices: phase information in U-Net
                         ---
                         ## References
                         - Choromanski, K. and Colwell, L. (2020). Rethinking Attention with Performers. Google Research. https://blog.research.google/2020/10/rethinking-attention-with-performers.html
